@@ -1,0 +1,4 @@
+# 复制成 application-local.yml 再填真实密码，那个文件在 .gitignore 里，不会被提交。
+spring:
+  datasource:
+    password: <你的数据库密码>

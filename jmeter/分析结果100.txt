@@ -1,0 +1,4 @@
+JMeter 100 线程并发交卷（同一个考试记录）—— 业务返回码分布：
+  100 次   code=NO_CODE 
+
+总请求 100，耗时 min 4ms / avg 9ms / max 46ms
