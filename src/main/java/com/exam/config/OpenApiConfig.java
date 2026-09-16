@@ -8,28 +8,16 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * 接口文档元信息配置。
- * <p>
- * <b>不写这个类会怎样</b>：springdoc 会吐出一份「能跑但很难看」的文档 ——
- * 标题是硬编码的 {@code "OpenAPI definition"}，版本号 {@code "v0"}，
- * 没有作者、没有说明。页面上找不到任何归属信息，打开第一眼看到的是
- * 一个没名字的接口清单。
- * <p>
- * <b>这里配的是「文档的说明书」，不是业务代码</b>，但它决定了别人打开文档的第一印象，
- * 所以和业务代码一样值得写清楚。
- */
+/** 接口文档元信息配置。不配的话 springdoc 吐出来的标题是 "OpenAPI definition"、版本 v0。 */
 @Configuration
 public class OpenApiConfig {
 
     /**
      * 文档全局元信息 + 安全方案。
      * <p>
-     * <b>注意：安全方案必须挂在 OpenAPI 对象上，不能单独声明一个 Components bean。</b>
-     * springdoc 只会去容器里找 {@code OpenAPI} 类型的 bean，一个孤立的 {@code Components}
-     * bean 就是个没人读的普通对象 —— 现象是文档能打开、info 也正常，
-     * 但 {@code securitySchemes} 是空的 {@code {}}，Authorize 按钮压根不出现。
-     * 这种「静默失效」不报错、不警告，只能靠打开 {@code /v3/api-docs} 核对 JSON 才能发现。
+     * 安全方案必须挂在 OpenAPI 对象上，单独声明一个 Components bean 是没人读的 ——
+     * 现象是文档能打开、info 也正常，但 Authorize 按钮压根不出现，只能打开
+     * /v3/api-docs 核对 JSON 才能发现。
      */
     @Bean
     public OpenAPI examOpenAPI() {
@@ -67,21 +55,13 @@ public class OpenApiConfig {
                 .components(examComponents());
     }
 
-    /**
-     * JWT 的安全方案 —— 各控制器上的 {@code @SecurityRequirement(name = "Authorization")}
-     * 只是<b>引用</b>一个名字，方案本身得在这里定义出来。
-     * <p>
-     * 名字必须和注解里写的字符串完全一致（这里是 {@code "Authorization"}），
-     * 对不上就是引用了一个不存在的东西 —— 编译不报错、启动不报错，
-     * 只是页面上<b>没有 Authorize 按钮</b>，需要登录的接口一个都调不通。
-     */
+    /** JWT 安全方案。名字要和控制器上 {@code @SecurityRequirement} 里写的字符串完全一致 */
     private Components examComponents() {
         return new Components().addSecuritySchemes("Authorization",
                 new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
-                        // 必须是 "bearer"：填进去的 token 会被拼成 `Authorization: Bearer <token>`
+                        // 必须是 "bearer"，填进去的 token 会被拼成 Authorization: Bearer <token>
                         .scheme("bearer")
-                        // "JWT" 只是给页面上的提示文案用的，不影响实际行为
                         .bearerFormat("JWT")
                         .in(SecurityScheme.In.HEADER)
                         .name("Authorization")

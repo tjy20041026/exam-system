@@ -8,14 +8,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * 创建用户的入参。
- * <p>
- * <b>为什么不直接用 SysUser 实体接收入参？</b>
- * 因为实体包含 id、createTime、deleted 这些客户端不该决定的字段。
- * 如果直接用实体接收，客户端就能传 id 来覆盖指定记录，传 deleted 来绕过逻辑删除。
- * 用专门的 DTO 只暴露"允许客户端填的字段"，是防参数注入的第一道关卡。
- */
+/** 创建用户请求。不直接用实体接参：实体里的 id、createTime、deleted 不该由客户端决定。 */
 @Data
 @Schema(description = "创建用户请求")
 public class UserCreateDTO {

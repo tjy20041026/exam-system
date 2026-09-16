@@ -6,9 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 
-/**
- * 试卷查询条件。
- */
+/** 试卷查询条件，字段全可选，不传表示不过滤。 */
 @Data
 @Schema(description = "试卷查询条件")
 public class PaperQueryDTO {

@@ -5,14 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 
-/**
- * 统一响应体。
- * <p>
- * 所有接口一律返回这个结构，前端只需判断一次 code 就能区分成功与失败，
- * 不必为每个接口写不同的解析逻辑。
- *
- * @param <T> 业务数据的类型
- */
+/** 统一响应体。所有接口一律返回这个结构，前端判断一次 code 就能区分成功与失败。 */
 @Data
 @Schema(description = "统一响应体")
 public class Result<T> implements Serializable {
@@ -56,7 +49,6 @@ public class Result<T> implements Serializable {
         return new Result<>(resultCode.getCode(), resultCode.getMessage(), null);
     }
 
-    /** 失败，自定义状态码与提示语 */
     public static <T> Result<T> error(Integer code, String message) {
         return new Result<>(code, message, null);
     }

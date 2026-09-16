@@ -24,20 +24,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 用户管理接口。
- * <p>
- * <b>Controller 层应该很薄</b>：只做三件事 ——
- * 接收参数、调用 Service、包装返回值。
- * 任何业务判断（比如账号是否重复）都不该写在这里，
- * 否则同一段逻辑换个入口（定时任务、消息消费）就得抄一遍。
+ * 用户管理接口。Controller 只收参数、调 Service、包返回值，
+ * 业务判断都放 Service，免得换个入口（定时任务、消息消费）就得抄一遍。
  */
 @Tag(name = "01-用户管理", description = "用户的增删改查。全部接口仅管理员可访问")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-// 标在类上 = 本 Controller 的所有接口都需要 ADMIN 角色。
-// 如果某个方法有例外（比如"学生改自己的密码"），
-// 在方法上单独标 @RequiresRole 即可覆盖这里的声明
+// 标在类上 = 本类所有接口都要 ADMIN；某个方法要例外就在方法上单独标 @RequiresRole 覆盖
 @RequiresRole(UserRole.ADMIN)
 public class UserController {
 
@@ -57,7 +51,7 @@ public class UserController {
         return Result.success("更新成功", userService.update(id, dto));
     }
 
-    @Operation(summary = "删除用户", description = "逻辑删除，数据保留在库中但不再被查询到")
+    @Operation(summary = "删除用户", description = "物理删除。账号名随即释放，可以重新注册")
     @DeleteMapping("/{id}")
     public Result<Void> delete(
             @Parameter(description = "用户 ID", example = "1") @PathVariable Long id) {

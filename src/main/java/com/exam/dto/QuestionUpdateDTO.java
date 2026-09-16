@@ -10,29 +10,7 @@ import lombok.Data;
 
 import java.util.List;
 
-/**
- * 修改题目的请求参数。
- * <p>
- * <b>为什么和 QuestionCreateDTO 分成两个类，而不是共用一个？</b>
- * <p>
- * 因为它们的约束<b>不一样</b>，而且差异是有意义的：
- * <ul>
- *   <li>创建时 {@code content}、{@code type}、{@code answer} 都是<b>必填</b>的
- *       （{@code @NotBlank}/{@code @NotNull}）</li>
- *   <li>修改时这些都<b>可以不传</b>，不传表示"这一项不动"。
- *       如果复用创建用的 DTO，那么每次改个分值，
- *       都得把题干、答案、选项全部原样再传一遍 ——
- *       传漏一个字段就把它清空了</li>
- * </ul>
- * <p>
- * 用一个类 + 在 Service 里写一堆 {@code if (dto.getContent() != null)}
- * 来区分"创建"和"更新"，最后会得到一个谁也不敢改的类。
- * 分成两个类虽然多写几十行，但每个类的意图是明确的。
- * <p>
- * <b>代价</b>：字段重复了一份。如果题目要加十个字段，
- * 两个类都得改。这是这类"显式优于隐式"选择的固有成本 ——
- * 在字段数量不多的情况下，可读性的收益大于重复的代价。
- */
+/** 修改题目请求。没和 QuestionCreateDTO 共用一个类，因为约束不一样：创建时字段必填，这里不传表示不改。 */
 @Data
 @Schema(description = "修改题目请求，只传需要改的字段")
 public class QuestionUpdateDTO {

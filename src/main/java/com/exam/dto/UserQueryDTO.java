@@ -4,13 +4,7 @@ import com.exam.enums.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-/**
- * 用户分页查询条件。
- * <p>
- * 所有字段都可为空 —— 为空表示"该条件不参与过滤"。
- * 这是查询类 DTO 与新增/更新类 DTO 的本质区别：
- * 后者字段必填（用 @NotBlank 约束），前者全选填。
- */
+/** 用户分页查询条件，字段全可选，为空表示该条件不参与过滤。 */
 @Data
 @Schema(description = "用户查询条件")
 public class UserQueryDTO {

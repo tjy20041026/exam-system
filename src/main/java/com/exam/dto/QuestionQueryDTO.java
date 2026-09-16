@@ -6,9 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 
-/**
- * 题库查询条件。所有字段都可选，不传表示不过滤。
- */
+/** 题库查询条件，字段全可选，不传表示不过滤。 */
 @Data
 @Schema(description = "题库查询条件")
 public class QuestionQueryDTO {
@@ -31,9 +29,7 @@ public class QuestionQueryDTO {
 
     @Schema(description = "每页条数", example = "10")
     @Min(value = 1, message = "每页至少 1 条")
-    // 上限 100 是【防护性设计】：如果不限制，有人传 size=1000000
-    // 就会让数据库一次性捞出全表，内存和网络都可能被打爆。
-    // 这类"分页参数没有上限"的问题在很多项目里都能看到
+    // 不设上限的话 size 传大一点就能把全表捞出来
     @Max(value = 100, message = "每页最多 100 条")
     private Long size = 10L;
 }

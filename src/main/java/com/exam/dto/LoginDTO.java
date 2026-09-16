@@ -5,18 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * 登录请求参数。
- * <p>
- * <b>注意这里对密码的校验规则和 {@code UserCreateDTO} 不一样</b>：
- * 创建用户时校验「长度 6-32 位」，那是为了拦住用户设置弱密码；
- * 登录时只校验「不能为空」，不校验长度。
- * <p>
- * 原因是：如果登录时也校验「至少 6 位」，那么当密码策略从 6 位改成 8 位之后，
- * 那些用 6 位老密码注册的用户会<b>连登录都进不去</b>，
- * 直接收到「密码长度不足」这种莫名其妙的提示 —— 他明明输的是对的。
- * 登录的逻辑应该是「拿你给的凭据去比对」，而不是「先评判这个密码合不合格」。
- */
+/** 登录请求。密码只校验非空、不校验长度，否则密码策略收紧之后，老用户连登录都进不去。 */
 @Data
 @Schema(description = "登录请求")
 public class LoginDTO {

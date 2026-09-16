@@ -5,33 +5,13 @@ spring:
   application:
     name: exam-system
 
-  # ==================== 本机私有配置 ====================
-  #
-  # 【为什么要有这一段】
-  # 数据库密码不属于代码，它属于【部署环境】。把它写在这个文件里提交上去，
-  # 密码就会永久留在 git 历史中 —— 即使以后删掉这一行，历史里还查得到。
-  #
-  # 所以真实密码放在 application-local.yml 里，而那个文件被 .gitignore 排除，
-  # 永远不会进版本库。这里用 import 把它加载进来。
-  #
-  # 【为什么要加 optional:】
-  # 没有 optional 前缀时，文件不存在会直接启动失败。
-  # 加上之后，别人 clone 下来（没有这个文件）也能启动，
-  # 只是连不上数据库、报错信息更明确而已。
-  # 对本项目来说，"能启动但连不上库"比"压根启动不了"更好排查。
+  # 数据库密码不在这个文件里，放在 application-local.yml（已被 .gitignore 排除）。
+  # 加 optional: 是让文件缺失时应用照样能启动，只是连不上库 —— 比压根起不来好排查。
   config:
     import: optional:file:./application-local.yml
 
-  # ==================== MySQL ====================
-  # 使用应用专用账号 exam_app（只对 exam_system 库有权限），不必用 root
-  # 账号创建脚本：sql/00_init_account.sql
-  #
-  # ⚠️ 注意这里【故意没有 password 字段】。
-  # 密码在 application-local.yml 里。这样 application.yml 可以放心提交，
-  # 而本机的密码照常生效 —— 两个文件里都没有"默认密码"这种半吊子写法。
-  #
-  # 如果 application-local.yml 缺失，应用能启动，但访问数据库时会报
-  # "Access denied" —— 看到这个错，去建 application-local.yml 即可。
+  # 用专用账号 exam_app，只对 exam_system 库有权限，不必用 root。建号脚本：sql/00_init_account.sql
+  # 这里故意不写 password 字段，密码在 application-local.yml 里
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/exam_system?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
@@ -41,14 +21,11 @@ spring:
       minimum-idle: 2
       connection-timeout: 30000
 
-  # ==================== Redis ====================
-  # 项目专用实例：端口 6380，与禅道占用的 6379 完全隔离
-  # 启动方式：双击 tools/redis/start-redis.bat
+  # 项目专用实例，6380，与禅道占用的 6379 隔离。启动：tools/redis/start-redis.bat
   data:
     redis:
       host: 127.0.0.1
       port: 6380
-      # 本项目实例未设密码。若你后来加了密码，在这里填 password 字段
       database: 0
       timeout: 3000ms
       lettuce:
@@ -58,39 +35,31 @@ spring:
           min-idle: 2
 
   jackson:
-    # 注意：这一项【只对老的 java.util.Date 生效】，管不到 LocalDateTime。
-    # LocalDateTime 的格式由 config/JacksonConfig.java 显式注册序列化器控制，
-    # 不配那个的话会输出成 2026-09-15T20:18:46 这种带 T 的 ISO 格式。
+    # 这一项只对 java.util.Date 生效，管不到 LocalDateTime，
+    # 后者的格式在 config/JacksonConfig.java 里注册序列化器控制
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
 
-# ==================== MyBatis-Plus ====================
 mybatis-plus:
   configuration:
-    # 数据库下划线命名 -> Java 驼峰命名自动映射
     map-underscore-to-camel-case: true
-    # 开发期把执行的 SQL 打到控制台，方便排查。上线要关掉
+    # 开发期把执行的 SQL 打到控制台，上线要关掉
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    # 枚举按【名字】映射到 VARCHAR 列。
-    # 不指定的话，MyBatis-Plus 默认会用 MybatisEnumTypeHandler，
-    # 它期望枚举带 @EnumValue 注解或实现 IEnum 接口；
-    # 我们的 UserRole 两者都没有，显式指定成 MyBatis 原生的 EnumTypeHandler
-    # 可以确保按 name() 存取，行为确定、不依赖框架的默认策略。
+    # 显式指定原生的 EnumTypeHandler，按 name() 存取。
+    # 不指定的话 MyBatis-Plus 默认用 MybatisEnumTypeHandler，那要求枚举带 @EnumValue
+    # 或实现 IEnum 接口，UserRole 两个都没有
     default-enum-type-handler: org.apache.ibatis.type.EnumTypeHandler
   global-config:
     db-config:
       id-type: auto
-      # 逻辑删除：标记 deleted=1 而非物理删除，查询自动过滤
+      # 逻辑删除。只对带 deleted 列的表生效，sys_user 没有这一列，走物理删除
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# ==================== 接口文档 ====================
-# 关闭 Knife4j 增强模式。
-# 原因：Knife4j 4.5.0 的 Knife4jOpenApiCustomizer 是按 springdoc 2.3.0 的 API 编译的，
-# 它调用了 SpringDocConfigProperties.getGroupConfigs()，而该方法在 springdoc 2.8.x 中已被移除。
-# 开启增强模式会触发 NoSuchMethodError，导致 /v3/api-docs 返回 500。
-# 关掉它之后，接口文档改由 springdoc 原生的 Swagger UI 提供。
+# 关掉 Knife4j 增强模式。4.5.0 的 Knife4jOpenApiCustomizer 是按 springdoc 2.3.0 编译的，
+# 调用了 2.8.x 中已删除的 getGroupConfigs()，开着会抛 NoSuchMethodError，/v3/api-docs 返回 500。
+# 关掉后接口文档由 springdoc 原生的 Swagger UI 提供。
 knife4j:
   enable: false
 
@@ -100,43 +69,19 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-# ==================== 业务配置 ====================
 exam:
   jwt:
-    # HS256 要求密钥至少 256 位（32 字节，UTF-8 编码后），否则 JwtUtil 启动时直接报错。
-    #
-    # ${EXAM_JWT_SECRET:默认值} 是 Spring 的占位符语法：
-    # 优先读环境变量 EXAM_JWT_SECRET，读不到才用冒号后面的默认值。
-    #
-    # 这么做是因为【密钥绝不该提交进代码仓库】——
-    # 一旦泄露，任何人都能自己签发 token 冒充管理员，而且服务端完全无法察觉
-    # （JWT 无状态，它只验签名对不对，不问是谁签的）。
-    # 生产环境必须通过环境变量或配置中心注入，这里的默认值只为本地开发方便。
+    # HS256 要求密钥至少 32 字节。优先读环境变量，读不到才用冒号后面的默认值 ——
+    # 默认值只为本地开发方便，生产环境必须从环境变量或配置中心注入
     secret: ${EXAM_JWT_SECRET:dev-only-do-not-use-in-production-3f9a7c1e5b2d8046e6a1}
-    # token 有效期。设短一些更安全（泄露后的窗口期小），但用户要频繁重新登录。
-    # 业界常见做法是「短效 access token + 长效 refresh token」，本项目从简
     expire-minutes: 120
 
-  # ==================== 定时任务 ====================
-  # 两个任务：
-  #   1. 超时自动交卷 —— 扫描 ONGOING 且已过 deadline 的记录，替学生交卷
-  #   2. 兜底落库     —— 把 Redis 里的作答态定期同步到 MySQL，防 Redis 丢数据
+  # 两个定时任务：超时自动交卷（扫 ONGOING 且已过 deadline 的）、兜底落库（Redis 同步进 MySQL）
   scheduler:
-    # 单批处理上限。防止某次异常导致积压后，一次把所有记录捞进内存
+    # 单批上限，避免某次积压后一次把所有记录捞进内存
     batch-size: 200
-    # 应用启动后延迟多久才开始跑第一次任务。
-    # 为什么要延迟：Spring 启动完成时，数据库连接池和数据源虽然就绪了，
-    # 但让启动过程先彻底走完再跑批处理，可以避免启动瞬间的资源争抢，
-    # 也让启动日志保持干净（不会被任务日志插进来）。
+    # 启动后延迟一会儿再跑第一次，避开启动瞬间的资源争抢
     initial-delay-ms: 15000
-    #
-    # ⚠️ 下面两个间隔，本地开发刻意调短了，方便观察效果。
-    #
-    # 生产环境应该用 30000 / 60000：
-    #   · 超时扫描 30 秒 —— 学生超时后最多等 30 秒被自动交卷，可以接受
-    #   · 兜底落库 60 秒 —— 见 ExamScheduler 里关于「数据安全 vs 数据库压力」的讨论
-    #
-    # 调短到 5 秒的代价是：数据库每秒都要被扫一次，
-    # 而且 Redis 存在的意义（把高频写从数据库卸下来）会被削弱。
+    # 下面两个间隔本地刻意调短了方便观察效果，生产建议用 30 秒 / 60 秒
     timeout-scan-interval-ms: 8000
     flush-interval-ms: 15000

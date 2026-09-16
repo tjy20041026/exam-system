@@ -12,27 +12,7 @@ import lombok.Data;
 
 import java.util.List;
 
-/**
- * 录入题目的请求参数。
- *
- * <h3>关于校验的边界：注解只能管"格式"，管不了"业务"</h3>
- * <p>
- * 下面的 {@code @NotNull}、{@code @Size} 这些注解，能保证字段**存在且格式合法**，
- * 但它们表达不了这样的规则：
- * <ul>
- *   <li>单选题的答案必须正好是某一个选项的 key</li>
- *   <li>多选题的答案至少要有两个选项，否则它就该是单选题</li>
- *   <li>简答题不该有选项，选择题必须有选项</li>
- *   <li>答案里不能出现选项列表中不存在的 key</li>
- * </ul>
- * <p>
- * 这些是<b>跨字段的业务规则</b>，注解做不到（或者勉强能做到但会变成
- * 一个难以维护的自定义校验器）。所以它们放在
- * {@code QuestionServiceImpl.validateByType()} 里手写。
- * <p>
- * 分清「格式校验」和「业务校验」的边界，是一个很实用的判断力 ——
- * 把业务规则硬塞进注解，最后往往写出一个谁也不敢碰的怪物。
- */
+/** 录入题目请求。跨字段的业务规则（单选题的答案必须命中某个选项等）注解表达不了，在 QuestionServiceImpl.validateByType() 里手写。 */
 @Data
 @Schema(description = "录入题目请求")
 public class QuestionCreateDTO {

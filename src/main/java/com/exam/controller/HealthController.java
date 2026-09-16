@@ -16,11 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 环境自检接口。
- * <p>
- * Day 1 的产出物：把「Java / Spring Boot / MySQL / Redis / 接口文档」
- * 五个环节逐个打通并可视化，任何一个环节不通都能立刻定位到是哪一环，
- * 而不必等到写业务代码时才发现。
+ * 环境自检接口。逐个检查 Java / Spring Boot / MySQL / Redis / 接口文档，
+ * 哪个环节不通能立刻定位，不必等到写业务时才发现。
  */
 @Slf4j
 @Tag(name = "00-环境自检", description = "验证各组件连通性，仅开发期使用")
@@ -90,7 +87,7 @@ public class HealthController {
         return Result.success(data);
     }
 
-    @Operation(summary = "全组件一次性自检", description = "一次性检查所有依赖，Day 1 验收用这个")
+    @Operation(summary = "全组件一次性自检", description = "一次性检查所有依赖，部署完先用这个验一遍")
     @GetMapping("/all")
     public Result<Map<String, Object>> all() {
         Map<String, Object> data = new LinkedHashMap<>();

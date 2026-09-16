@@ -20,12 +20,7 @@ public final class PaperConverter {
     private PaperConverter() {
     }
 
-    /**
-     * 试卷 -> 概要 VO。
-     *
-     * @param questionCount 题目数量。由调用方查询后传入，
-     *                      因为 Paper 实体本身不含这个字段（它不在 paper 表里）
-     */
+    /** 试卷 -> 概要 VO。questionCount 由调用方查好传进来，Paper 实体里没有这个字段。 */
     public static PaperVO toVO(Paper paper, int questionCount) {
         if (paper == null) {
             return null;
@@ -38,15 +33,7 @@ public final class PaperConverter {
 
     /**
      * 试卷 + 关联 + 题目 -> 详情 VO。
-     *
-     * <h3>为什么参数是「三个列表」而不是让调用方嵌套循环</h3>
-     * <p>
-     * 这里的关键是 {@code questionMap}：调用方先把题目列表转成一个
-     * {@code Map<题目ID, 题目>}，然后在组装时 O(1) 查表。
-     * <p>
-     * 如果用嵌套循环（对每个 paper_question 去 questions 列表里找对应的题目），
-     * 复杂度是 O(n²)。一张 50 题的试卷就是 2500 次比较 ——
-     * 虽然这里 n 不大，但"用 Map 做关联"是一个应该条件反射般想到的模式。
+     * 调用方先把题目列表转成 Map，这里按 ID 查表，免得对每条关联行再去遍历题目列表。
      */
     public static PaperDetailVO toDetailVO(Paper paper,
                                            List<PaperQuestion> relations,
@@ -84,18 +71,12 @@ public final class PaperConverter {
         vo.setCreateTime(paper.getCreateTime());
     }
 
-    /**
-     * 把「关联行 + 题目」拼成一道题的视图。
-     * <p>
-     * 注意 {@code score} 取的是 {@code rel.getScore()}（本试卷中的分值），
-     * 不是 {@code question.getScore()}（题库里的建议分值）。
-     * 这两个值经常不同，取错了会让教师看到的分值和实际判分用的分值对不上。
-     */
+    /** 关联行 + 题目 -> 一道题的视图 */
     private static PaperQuestionVO toPaperQuestionVO(PaperQuestion rel, Question question) {
         PaperQuestionVO vo = new PaperQuestionVO();
         vo.setQuestionId(rel.getQuestionId());
         vo.setSortOrder(rel.getSortOrder());
-        // ← 关键：分值来自关联行
+        // 分值取关联行的，不是题库里的建议分值，这两个值经常不一样
         vo.setScore(rel.getScore());
 
         if (question != null) {
@@ -106,8 +87,7 @@ public final class PaperConverter {
             vo.setAnswer(question.getAnswer());
             vo.setDifficulty(question.getDifficulty());
         }
-        // question 为 null 的情况见 PaperServiceImpl 的说明：
-        // 理论上不该发生，但返回 null 字段比抛异常更温和
+        // question 为 null 属于理论上不该发生的情况，返回空字段比抛异常温和
         return vo;
     }
 }

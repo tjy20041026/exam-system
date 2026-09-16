@@ -36,14 +36,9 @@ import java.util.stream.Collectors;
 
 /**
  * 题库服务实现。
- *
- * <h3>本类的核心：按题型校验答案</h3>
  * <p>
- * 题目的"完整性"没有统一的定义 —— 单选题要有一个合法选项作答案，
- * 多选题要有至少两个，判断题的答案只能是"对/错"，简答题则不该有选项。
- * 这类<b>随类型变化的规则</b>是最容易出 bug 的地方，
- * 所以这里把它集中在一个方法里（{@link #validateByType}），
- * 而不是散落在 create / update 各处。
+ * 题目"完整"的定义随题型变化，这些规则统一收在 {@link #validateByType} 里，
+ * 不散落到 create / update 各处。
  */
 @Slf4j
 @Service
@@ -66,10 +61,8 @@ public class QuestionServiceImpl implements QuestionService {
         question.setAnswer(dto.getAnswer());
         question.setScore(dto.getScore());
         question.setDifficulty(dto.getDifficulty());
-        // 出题人从登录上下文取，【不接受客户端传入】。
-        // 如果让前端传 creatorId，任何人都能把题目挂到别人名下 —
-        // 这类"身份相关的字段必须由服务端根据登录态推断"是一条铁律，
-        // 凡是客户端能自己声明的身份字段，都等于没有身份校验
+        // 出题人从登录态取，不接受客户端传入 —— 让前端传 creatorId 的话，
+        // 任何人都能把题目挂到别人名下
         question.setCreatorId(UserContext.getUserId());
 
         questionMapper.insert(question);
@@ -87,14 +80,9 @@ public class QuestionServiceImpl implements QuestionService {
             throw new BizException(ResultCode.QUESTION_NOT_FOUND);
         }
 
-        // 【关键】校验必须基于"合并后的最终状态"，而不是只看本次改动。
-        //
-        // 反例：原题是单选题，选项为 A/B/C，答案 "A"。
-        // 现在只把 type 改成 MULTIPLE，其余不动。
-        // 如果只校验 dto 里的字段，会发现 answer 是 null（没传），
-        // 于是跳过校验 —— 结果库里出现一道"多选题但只有一个答案"的脏数据。
-        //
-        // 所以这里先把「新值优先、未传则沿用旧值」合并出来，再拿合并结果去校验。
+        // 校验必须基于"合并后的最终状态"：只把 type 改成 MULTIPLE、answer 不动时，
+        // 若只看 dto 里的字段就会发现 answer 为 null 而跳过校验，
+        // 库里就多出一道"多选题只有一个答案"的脏数据
         QuestionType finalType = dto.getType() != null ? dto.getType() : existing.getType();
         List<QuestionOption> finalOptions =
                 dto.getOptions() != null ? dto.getOptions() : existing.getOptions();
@@ -124,25 +112,18 @@ public class QuestionServiceImpl implements QuestionService {
             throw new BizException(ResultCode.QUESTION_NOT_FOUND);
         }
 
-        // ---------- 引用检查 ----------
-        // 题目被试卷引用时不能删。否则那张试卷里会少一道题，
-        // 但 paper_question 里还留着记录，学生答题时会拿到一个空题目。
-        //
-        // 注意这里要排掉"已被删除的试卷"：
-        // 如果一张试卷被逻辑删除了，它的 paper_question 关联行还在表里，
-        // 但那些引用已经不算数了 —— 不应该因为它们而禁止删除题目。
+        // 题目被试卷引用时不能删，否则那张试卷会少一道题：
+        // paper_question 里还留着记录，学生答题时拿到一个空题目。
+        // 已被逻辑删除的试卷不算 —— 它的关联行还在表里，但引用已经失效
         List<PaperQuestion> refs = paperQuestionMapper.selectList(
                 new LambdaQueryWrapper<PaperQuestion>().eq(PaperQuestion::getQuestionId, id));
 
         if (!refs.isEmpty()) {
-            // 这里用 Set 去重：同一张试卷只会引用一道题一次（有唯一索引保证），
-            // 但多张试卷会产出多个 paperId
             Set<Long> paperIds = refs.stream()
                     .map(PaperQuestion::getPaperId)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
 
-            // selectCount 会被 @TableLogic 自动加上 deleted = 0，
-            // 所以这里数出来的正是"还活着的"试卷数量
+            // selectCount 会被 @TableLogic 自动加上 deleted = 0，数出来的是还活着的试卷
             Long alivePapers = paperMapper.selectCount(
                     new LambdaQueryWrapper<Paper>().in(Paper::getId, paperIds));
 
@@ -152,7 +133,7 @@ public class QuestionServiceImpl implements QuestionService {
             }
         }
 
-        // 逻辑删除：把 deleted 置 1。历史考试记录里引用这道题的地方仍然查得到内容
+        // 逻辑删除。历史考试记录里引用这道题的地方仍然查得到内容
         questionMapper.deleteById(id);
         log.info("删除题目: id={}", id);
     }
@@ -169,9 +150,8 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public PageResult<QuestionVO> page(QuestionQueryDTO query) {
         LambdaQueryWrapper<Question> wrapper = new LambdaQueryWrapper<>();
-        // like 的第一个参数是条件：false 时整个条件不拼进 SQL。
-        // 这样就不用写一串 if 来判断"这个筛选项传了没有"，
-        // 仍然是【类型安全】的 —— 字段名用方法引用，改名时编译期就报错
+        // like / eq 的第一个参数是条件，false 时整条不拼进 SQL，
+        // 省掉一串判断"筛选项传了没有"的 if
         wrapper.like(StringUtils.hasText(query.getKeyword()),
                         Question::getContent, query.getKeyword())
                 .eq(query.getType() != null, Question::getType, query.getType())
@@ -184,16 +164,7 @@ public class QuestionServiceImpl implements QuestionService {
         return PageResult.of(result, QuestionConverter::toVO);
     }
 
-    // ==================== 按题型校验 ====================
-
-    /**
-     * 校验题目的完整性。规则随题型变化。
-     * <p>
-     * 用 {@code switch} 表达式（Java 14+）而不是 if-else 链：
-     * 编译器会检查枚举分支是否齐全，将来新增题型时，
-     * 这里会直接编译不过，逼着你补上对应的规则 ——
-     * 而不是等线上出现一道"没人知道该怎么判分"的题。
-     */
+    /** 按题型校验完整性。用 switch 表达式，将来新增题型时编译期就报错，逼着补上规则 */
     private void validateByType(QuestionType type, List<QuestionOption> options, String answer) {
         if (type == null) {
             throw new BizException(ResultCode.PARAM_ERROR, "题型不能为空");
@@ -205,9 +176,8 @@ public class QuestionServiceImpl implements QuestionService {
         switch (type) {
             case SINGLE -> {
                 Set<String> keys = requireOptionKeys(options, 2);
-                // 答案必须正好是其中一个选项的 key。
-                // 如果教师填了 "E" 而选项只有 A-D，这道题将永远没人能答对 ——
-                // 而且不会有任何报错，直到考试结束才发现全班这题都是 0 分
+                // 答案必须是选项之一。教师填了 "E" 而选项只有 A-D 的话，
+                // 这道题永远没人能答对，而且一路不报错，考完才发现全班这题都是 0 分
                 if (!keys.contains(answer.trim())) {
                     throw new BizException(ResultCode.QUESTION_ANSWER_INVALID,
                             "单选题的答案必须是选项之一，当前选项为 " + keys);
@@ -218,13 +188,11 @@ public class QuestionServiceImpl implements QuestionService {
                 Set<String> answerKeys = splitAnswer(answer);
 
                 if (answerKeys.size() < 2) {
-                    // 只有一个答案的多选题，本质上就是单选题。
-                    // 允许它的后果是判分逻辑要额外处理这种退化情况，
-                    // 不如在录入时就说清楚
+                    // 只有一个答案的多选题本质就是单选，允许它判分逻辑就得
+                    // 额外处理这种退化情况，不如在录入时就说清楚
                     throw new BizException(ResultCode.QUESTION_ANSWER_INVALID,
                             "多选题的答案至少需要 2 个选项，只有一个答案请改用单选题");
                 }
-                // 求差集：答案里有、选项里没有的那些 key
                 Set<String> invalid = new HashSet<>(answerKeys);
                 invalid.removeAll(keys);
                 if (!invalid.isEmpty()) {
@@ -232,15 +200,13 @@ public class QuestionServiceImpl implements QuestionService {
                             "答案中包含不存在的选项：" + invalid + "，当前选项为 " + keys);
                 }
                 if (answerKeys.size() != keys.size() && answerKeys.size() > keys.size()) {
-                    // 理论上走不到这里（上面已经保证 answerKeys ⊆ keys），
-                    // 保留作为断言性质的检查
+                    // 理论上走不到（上面已保证 answerKeys ⊆ keys），留作断言
                     throw new BizException(ResultCode.QUESTION_ANSWER_INVALID, "答案选项数量异常");
                 }
             }
             case JUDGE -> {
-                // 判断题不需要选项，但答案只能是"对"或"错"。
-                // 允许"正确"、"T"、"√" 这类写法会让判分变得脆弱 ——
-                // 学生提交"对"、标准答案是"正确"，字符串比对失败，判成错
+                // 只收"对/错"两种写法。允许"正确"、"T"、"√" 的话，
+                // 学生答"对"、标准答案写"正确"，字符串比对失败就被判错
                 String normalized = answer.trim();
                 if (!"对".equals(normalized) && !"错".equals(normalized)) {
                     throw new BizException(ResultCode.QUESTION_ANSWER_INVALID,
@@ -248,13 +214,11 @@ public class QuestionServiceImpl implements QuestionService {
                 }
             }
             case ESSAY -> {
-                // 简答题不该有选项 —— 有选项的简答题会让学生困惑：
-                // 到底是随便写一段，还是从里面选？
+                // 简答题带选项会让学生困惑：到底是随便写一段，还是从里面选？
                 if (options != null && !options.isEmpty()) {
                     throw new BizException(ResultCode.QUESTION_ANSWER_INVALID,
                             "简答题不应包含选项，请清空选项后重试");
                 }
-                // 答案长度已经在 DTO 上用 @Size 限制了
             }
         }
     }
@@ -278,9 +242,8 @@ public class QuestionServiceImpl implements QuestionService {
                 throw new BizException(ResultCode.PARAM_ERROR, "选项的标识和内容都不能为空");
             }
             String key = option.key().trim();
-            // 重复的 key 是灾难性的：学生选了 A，判分时不知道该按哪个 A 算分。
-            // 这里用 Set.add 的返回值判断重复，而不是 add 之后再比 size，
-            // 因为前者能立刻定位到是哪个 key 重复了
+            // 重复的 key 会让学生选了 A 之后判分不知道该按哪个 A 算分。
+            // 用 Set.add 的返回值判断，比 add 完再比 size 能直接定位到是哪个 key 重复
             if (!keys.add(key)) {
                 throw new BizException(ResultCode.PARAM_ERROR, "选项标识重复：" + key);
             }
@@ -289,15 +252,8 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     /**
-     * 把多选题答案拆成集合。
-     * <p>
-     * 做了两件容错：
-     * <ul>
-     *   <li>忽略大小写 —— 教师填 "a,b" 和 "A,B" 应该等价</li>
-     *   <li>忽略空格 —— "A, B, D" 这种带空格的写法很常见</li>
-     * </ul>
-     * 返回 {@code LinkedHashSet} 而非 {@code HashSet}：
-     * 出错信息里打印出来的顺序会和教师填写的顺序一致，便于他自己核对。
+     * 把多选题答案拆成集合：忽略大小写和空格（"a,b"、"A, B" 都应该等价）。
+     * 用 LinkedHashSet 是让报错信息里的顺序和教师填写的一致。
      */
     private Set<String> splitAnswer(String answer) {
         return Arrays.stream(answer.split(","))

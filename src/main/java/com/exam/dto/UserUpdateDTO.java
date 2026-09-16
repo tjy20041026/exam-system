@@ -6,17 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * 更新用户的入参。
- * <p>
- * <b>刻意不包含 username 和 password</b>：
- * <ul>
- *   <li>账号是登录凭据，也是各种业务数据的关联键，不允许随意改</li>
- *   <li>改密码是独立且更敏感的操作，应该有单独的接口
- *       （需要校验旧密码、可能需要强制下线该用户的所有登录态）</li>
- * </ul>
- * 把"能改什么"用 DTO 明确框住，比在 Service 里写一堆 if 判断要清晰得多。
- */
+/** 更新用户请求。不含 username 和 password：账号是各种业务数据的关联键不能改，改密码走单独的接口。 */
 @Data
 @Schema(description = "更新用户请求")
 public class UserUpdateDTO {
