@@ -15,7 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 /**
  * Redis 序列化配置。
  * <p>
- * <b>这是新手最容易踩、且现象最迷惑的坑之一。</b>
+ * <b>默认配置在这里，但现象非常迷惑，必须显式覆盖。</b>
  * Spring Boot 自动装配的 RedisTemplate 默认用 JdkSerializationRedisSerializer，
  * 后果是：
  * <ul>

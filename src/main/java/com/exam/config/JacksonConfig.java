@@ -38,7 +38,7 @@ import java.time.format.DateTimeFormatter;
  *
  * <h3>关于 Long 精度问题：本项目【刻意不做】全局转换</h3>
  * <p>
- * 这是个常见的面试考点：雪花算法生成的 ID 是 19 位 Long，
+ * 雪花算法生成的 ID 是 19 位 Long，
  * 而 JavaScript 的 Number 只能安全表示 2^53（约 16 位），
  * 直接返回会让前端拿到<b>末尾几位被悄悄改写</b>的 ID，而且是静默的，极难排查。
  * 通行做法是全局把 Long 序列化成字符串。
@@ -57,8 +57,8 @@ import java.time.format.DateTimeFormatter;
  * 而是在 ID 字段上单独标注 {@code @JsonSerialize(using = ToStringSerializer.class)} ——
  * 精确到字段，不误伤其他 Long。
  * <p>
- * 这个"知道有这回事、但判断出在此处不适用，并说得出为什么"的判断过程，
- * 比无脑照搬一个全局配置更能在面试里站稳。
+ * 判断一项"大家都这么做"的配置要不要跟，标准不是它流不流行，
+ * 而是它解决的问题在这个项目里存不存在。
  */
 @Configuration
 public class JacksonConfig {

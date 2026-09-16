@@ -10,7 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Spring MVC 配置：注册拦截器。
  * <p>
  * {@code WebMvcConfigurer} 是 Spring Boot 提供的<b>扩展点</b>接口，
- * 它里面所有方法都有默认空实现，你只需要覆盖关心的那几个。
+ * 它里面所有方法都有默认空实现，只覆盖需要的那几个即可。
  * Spring Boot 会自动找到实现了这个接口的 Bean 并把配置合并进去。
  * <p>
  * 早期版本要继承 {@code WebMvcConfigurationSupport}，但那样会

@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * <p>
  * <b>不写这个类会怎样</b>：springdoc 会吐出一份「能跑但很难看」的文档 ——
  * 标题是硬编码的 {@code "OpenAPI definition"}，版本号 {@code "v0"}，
- * 没有作者、没有说明。页面上找不到任何归属信息，面试官打开第一眼看到的是
+ * 没有作者、没有说明。页面上找不到任何归属信息，打开第一眼看到的是
  * 一个没名字的接口清单。
  * <p>
  * <b>这里配的是「文档的说明书」，不是业务代码</b>，但它决定了别人打开文档的第一印象，
@@ -61,7 +61,6 @@ public class OpenApiConfig {
                                 > 考试流程必须用**学生**账号；教师账号调考试接口会被 403 拒绝。
                                 > 学生端返回的题目**不含标准答案**，交卷后也不返回 —— 防止先交卷的泄题给后考的。
                                 """)
-                        // 邮箱和 git 配置里的一致，面试前可自行改成真实联系方式
                         .contact(new Contact()
                                 .name("唐靖祎")
                                 .email("tangjingyi@example.com")))
