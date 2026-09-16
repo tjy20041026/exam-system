@@ -1,33 +1,48 @@
 HELP.md
-  target/
-  .mvn/wrapper/maven-wrapper.jar
-  !**/src/main/**/target/
-  !**/src/test/**/target/
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-  ### STS ###
-  .apt_generated
-  .classpath
-  .factorypath
-  .project
-  .settings
-  .springBeans
-  .sts4-cache
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
-  ### IntelliJ IDEA ###
-  .idea
-  *.iws
-  *.iml
-  *.ipr
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
 
-  ### NetBeans ###
-  /nbproject/private/
-  /nbbuild/
-  /dist/
-  /nbdist/
-  /.nb-gradle/
-  build/
-  !**/src/main/**/build/
-  !**/src/test/**/build/
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-  ### VS Code ###
-  .vscode/
+### VS Code ###
+.vscode/
+
+### 本项目的额外排除 ###
+
+# 数据库密码写在这里，绝不能提交。模板见 application-local.yml.example
+application-local.yml
+
+# Redis 运行目录，约 21MB 的二进制，未纳入版本库
+tools/
+
+out/
+
+# JMeter 压测产物，每次跑都会覆盖
+jmeter/*.log
+jmeter/*.jtl
+*.jtl
