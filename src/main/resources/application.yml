@@ -82,6 +82,6 @@ exam:
     batch-size: 200
     # 启动后延迟一会儿再跑第一次，避开启动瞬间的资源争抢
     initial-delay-ms: 15000
-    # 下面两个间隔本地刻意调短了方便观察效果，生产建议用 30 秒 / 60 秒
+    # 下面两个间隔本地调短了方便观察效果，生产用 30 秒 / 60 秒
     timeout-scan-interval-ms: 8000
     flush-interval-ms: 15000

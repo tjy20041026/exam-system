@@ -89,8 +89,8 @@ CREATE TABLE `paper` (
   COMMENT = '试卷表';
 
 
--- score 是有意冗余的，没让程序实时读 question.score：
--- 同一道题在不同试卷里分值可以不同（期末卷 10 分、随堂测 2 分），实时读就做不到。
+-- score 存在这里而不是实时读 question.score：同一道题在不同试卷里分值可以不同
+-- （期末卷 10 分、随堂测 2 分），实时读就做不到。
 CREATE TABLE `paper_question` (
     `id`          BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
     `paper_id`    BIGINT NOT NULL                COMMENT '试卷 ID',

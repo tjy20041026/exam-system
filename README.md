@@ -39,24 +39,24 @@ mysql -u root -p < sql/01_schema.sql         # 建 6 张表
 
 ### 2. 配置数据库密码
 
-**数据库密码不在 `application.yml` 里**，而在 `application-local.yml` 里，后者被 `.gitignore` 排除，不会进版本库。
+数据库密码不在 `application.yml` 里，而是放在 `application-local.yml`，后者被 `.gitignore` 排除，不会进版本库。
 
 ```bash
 cp application-local.yml.example application-local.yml
 # 然后编辑 application-local.yml，把 password 改成第 1 步里设的密码
 ```
 
-> 密码属于部署环境，不该进代码。写进 `application.yml` 提交上去，以后删掉那一行也没用，git 历史里还查得到。
+> 密码属于部署环境，不进代码。写进 `application.yml` 再删也没用，git 历史里查得到。
 
 ### 3. 启动 Redis
 
-项目使用**独立的 6380 端口实例**，与机器上其他 Redis 互不干扰：
+项目使用独立的 6380 端口实例，与机器上其他 Redis 互不干扰：
 
 ```bash
 tools/redis/start-redis.bat
 ```
 
-> `tools/` 目录未纳入版本库（约 21MB 的 Redis 二进制）。克隆本项目后，需要自行准备 Windows 版 Redis 放到 `tools/redis/` 下，并把 `redis.conf` 的端口改成 6380。
+> `tools/` 未纳入版本库（约 21MB 的 Redis 二进制）。需要自备一份 Windows 版 Redis 放在 `tools/redis/`，并把 `redis.conf` 端口改成 6380。
 
 ### 4. 启动应用
 
@@ -66,7 +66,7 @@ tools/redis/start-redis.bat
 
 启动后访问接口文档：**http://127.0.0.1:8080/doc.html**
 
-> ⚠️ 必须用 `127.0.0.1` 而非 `localhost`，且用 `http`。浏览器有「始终使用安全连接」设置时会把 `localhost` 升级成 `https`，而本服务不提供 TLS，会显示「无法访问此网页」。
+> 必须用 `127.0.0.1` 而非 `localhost`，且用 `http`。浏览器有「始终使用安全连接」设置时会把 `localhost` 升级成 `https`，而本服务不提供 TLS，会显示「无法访问此网页」。
 
 ### 5. 初始账号
 

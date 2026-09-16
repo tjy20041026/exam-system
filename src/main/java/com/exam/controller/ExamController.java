@@ -33,7 +33,7 @@ import java.util.List;
 @Tag(name = "05-考试（学生端）", description = """
         学生考试完整流程。
 
-        **必须用学生账号登录**（如 student01 / Student@123），教师账号会被 403 拒绝。
+        本组接口限定学生账号（如 student01），教师账号会被 403 拒绝。
 
         典型流程：
         1. POST /api/exams/start/{paperId}   开考，拿到 examRecordId 和题目
@@ -42,7 +42,7 @@ import java.util.List;
         4. POST /api/exams/{id}/submit       交卷，系统自动判客观题
         5. GET  /api/exams/{id}/result       查成绩单
 
-        ⚠️ 返回的题目**不含标准答案**，交卷后也不会返回 —— 防止先交卷的学生泄题给后考的。
+        返回的题目不含标准答案，交卷后也不会返回 —— 防止先交卷的学生泄题给后考的。
         """)
 @RestController
 @RequestMapping("/api/exams")
@@ -56,8 +56,8 @@ public class ExamController {
     @Operation(summary = "开始考试", description = """
             进入考场，返回试卷内容 + 截止时间 + 剩余秒数。
 
-            **这个接口是幂等的**：如果已经有进行中的考试，直接返回那一场（不会重新计时、
-            不会新建记录）。所以刷新页面、换设备登录都可以放心再调一次。
+            幂等接口：如果已经有进行中的考试，直接返回那一场，不会重新计时或新建记录，
+            所以刷新页面、换设备登录都可以再调一次。
 
             已交卷或已超时会返回错误提示，不会把题目再发一遍。
             """)
@@ -68,7 +68,7 @@ public class ExamController {
     }
 
     @Operation(summary = "获取试卷（断点续考/刷新）", description = """
-            答题过程中随时可调。返回题目 + 服务端计算的剩余秒数 + **已作答的内容**。
+            答题过程中随时可调。返回题目 + 服务端计算的剩余秒数 + 已作答的内容。
 
             作答状态存在服务端，关掉浏览器或换台电脑重新登录，调本接口就能恢复现场。
             """)
@@ -84,7 +84,7 @@ public class ExamController {
 
             幂等接口：同一道题反复提交不会产生多条记录，只保留最后一次。
 
-            `userAnswer` **允许为空字符串**（表示学生主动清空了这题）；
+            `userAnswer` 允许为空字符串（表示学生主动清空了这题）；
             不传或传 null 则视为"未作答"。
 
             多选题格式为 `A,C`（逗号分隔），判分时忽略顺序和大小写。
@@ -101,12 +101,11 @@ public class ExamController {
     @Operation(summary = "交卷", description = """
             交卷并自动判分。
 
-            - 客观题（单选/多选/判断）自动判分
-            - 简答题标记为待阅卷，需教师人工批阅
-            - 全部是客观题时，状态直接变 `GRADED`；有简答题则为 `SUBMITTED`
+            客观题（单选/多选/判断）自动判分；简答题标记为待阅卷，需教师人工批阅。
+            全部是客观题时状态直接变 `GRADED`，有简答题则为 `SUBMITTED`。
 
-            **防重复提交**：如果已经交过卷，会返回"本场考试已交卷"。
-            并发请求下也只会有一个成功（靠数据库条件更新 + 行锁保证）。
+            重复提交会返回"本场考试已交卷"，并发请求下也只有一个能成功
+            （靠数据库条件更新 + 行锁保证）。
             """)
     @PostMapping("/{examRecordId}/submit")
     public Result<Void> submit(
@@ -118,8 +117,8 @@ public class ExamController {
     @Operation(summary = "查询成绩单", description = """
             返回各题作答明细、对错、得分。
 
-            ⚠️ **不返回标准答案** —— 因为同一张试卷会被多个学生考、
-            且考试时间窗口重叠，先交卷的学生看到答案就能泄题给后考的。
+            不返回标准答案 —— 同一张试卷会被多个学生考、且考试时间窗口重叠，
+            先交卷的学生看到答案就能泄题给后考的。
 
             未交卷时返回错误（不是 0 分的空成绩单）。
             `hasPendingEssay = true` 表示简答题还没批，当前分数是暂定的。
